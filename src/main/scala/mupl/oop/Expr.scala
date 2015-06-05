@@ -102,14 +102,14 @@ case class Mult(e1: Expr, e2: Expr) extends Expr {
   }
 }
 
-case class IfGreater(e1: Expr, e2: Expr, then: Expr, els: Expr) extends Expr {
+case class IfGreater(e1: Expr, e2: Expr, e3: Expr, e4: Expr) extends Expr {
   self =>
   val evaluator = new Evaluator {
     def computeFreeVars(fv: Set[String]): (Expr, Set[String]) = {
       val (v1, s1) = e1.evaluator.computeFreeVars(fv)
       val (v2, s2) = e2.evaluator.computeFreeVars(fv)
-      val (v3, s3) = then.evaluator.computeFreeVars(fv)
-      val (v4, s4) = els.evaluator.computeFreeVars(fv)
+      val (v3, s3) = e3.evaluator.computeFreeVars(fv)
+      val (v4, s4) = e4.evaluator.computeFreeVars(fv)
       (IfGreater(v1, v2, v3, v4), s1 ++ s2 ++ s3 ++ s4)
     }
 
@@ -118,35 +118,35 @@ case class IfGreater(e1: Expr, e2: Expr, then: Expr, els: Expr) extends Expr {
       val v2 = e2.evaluator.evalUnderEnv(env)
       (v1, v2) match {
         case (Num(i1), Num(i2)) =>
-          if (i1 > i2) then.evaluator.evalUnderEnv(env)
-          else els.evaluator.evalUnderEnv(env)
+          if (i1 > i2) e3.evaluator.evalUnderEnv(env)
+          else e4.evaluator.evalUnderEnv(env)
         case _ => error("MUPL IfGreater applied to non-number")
       }
     }
   }
 }
 
-case class Fun(name: Option[String], param: String, body: Expr) extends Expr {
+case class Fun(name: Option[String], arg: String, body: Expr) extends Expr {
   self =>
   val evaluator = new Evaluator {
 
     def computeFreeVars(fv: Set[String]): (Expr, Set[String]) = {
       val a = body.evaluator.computeFreeVars(fv)
-      val fvUpd = a._2.filterNot(name.contains(_)) - param
-      (FunFV(name, param, a._1, fvUpd), fvUpd)
+      val fvUpd = a._2.filterNot(name.contains(_)) - arg
+      (FunFV(name, arg, a._1, fvUpd), fvUpd)
     }
 
     def evalUnderEnv(env: List[(String, Expr)]): Expr = self //or throw error
   }
 }
 
-case class Call(funExpr: Expr, arg: Expr) extends Expr {
+case class Call(funExpr: Expr, param: Expr) extends Expr {
   self =>
   val evaluator = new Evaluator {
 
     def computeFreeVars(fv: Set[String]): (Expr, Set[String]) = {
       val (v1, s1) = funExpr.evaluator.computeFreeVars(fv)
-      val (v2, s2) = arg.evaluator.computeFreeVars(fv)
+      val (v2, s2) = param.evaluator.computeFreeVars(fv)
       (Call(v1, v2), s1 ++ s2)
     }
 
@@ -154,9 +154,9 @@ case class Call(funExpr: Expr, arg: Expr) extends Expr {
       val cl = funExpr.evaluator.evalUnderEnv(env)
       cl match {
         case Closure(en, fun) =>
-          val argVal = arg.evaluator.evalUnderEnv(env)
+          val argVal = param.evaluator.evalUnderEnv(env)
           val c = fun.evaluator.evalUnderEnv(env)
-          val (funName, argName) = (c.fun.name, c.fun.param)
+          val (funName, argName) = (c.fun.name, c.fun.arg)
 
           val newEnv = funName match {
             case Some(n) => (n, cl) ::(argName, argVal) :: en
@@ -266,7 +266,7 @@ case class IsUnit(e: Expr) extends Expr {
   }
 }
 
-case class FunFV private[oop](name: Option[String], param: String, body: Expr, freeVars: Set[String]) extends Expr {
+case class FunFV private[oop](name: Option[String], arg: String, body: Expr, freeVars: Set[String]) extends Expr {
   self =>
   private def getClosureEnv(fun: FunFV, env: List[(String, Expr)]) = {
     def loop(s: Set[String], env: List[(String, Expr)], acc: List[(String, Expr)]): List[(String, Expr)] = {

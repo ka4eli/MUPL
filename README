@@ -1,0 +1,29 @@
+MUPL - Made Up Programming Language
+
+MUPL programs are written directly in Scala via descendants of Expr trait. Each Expr type represents some
+logic expression connected with his fields.
+
+Implemented types(core):
+
+Var(s) - variable
+Num(i) - constant number
+Add(e1, e2) - addition of 2 numbers
+Mult(e1, e2) - multiplication of 2 numbers
+IfGreater(e1, e2, e3, e4) - logical expression, evaluates `e3` if e1>e2, else evaluates `e4`
+Fun(name: Option[String], arg: String, body) - function with 1 arg
+Call(funExpr, param) - function call with actual parameter
+Let(s: String, e, body) - assignment: s=e in body
+Pair(e1, e2) - tuple
+Fst(e) - pair's first element
+Snd(e) - pair's second element
+Unit - void (same as scala's Unit)
+IsUnit(e) - check if e is Unit
+
+There is no booleans in core implementation(0 and 1 instead), but they can be added as extension for MUPL (See extensions package).
+New types can be easily added via OOP
+
+
+
+
+Just for fun. Was inspired by "Programming Languages" course on Coursera
+
